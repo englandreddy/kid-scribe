@@ -40,6 +40,9 @@
   .partnum{ font-family:"Bricolage Grotesque",sans-serif; font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--pink-d); }
   .card h2{ font-family:"Bricolage Grotesque",sans-serif; margin:3px 0 6px; font-size:23px; font-weight:800; color:var(--indigo); }
   .card .sub{ font-size:14.5px; color:var(--muted); margin:0 0 12px; font-weight:500; }
+  .readbtn{ display:inline-flex; align-items:center; gap:6px; margin:0 0 14px; background:#fff; color:var(--blue-d); border:2px solid var(--blue); border-radius:999px; font-family:"Bricolage Grotesque",sans-serif; font-weight:800; font-size:13px; padding:7px 14px; cursor:pointer; box-shadow:0 2px 0 #cfe6f3; }
+  .readbtn:active{ transform:translateY(2px); box-shadow:0 0 0 #cfe6f3; }
+  .readbtn.on{ background:var(--blue); color:#fff; border-color:var(--blue-d); }
   .banner{ padding:11px 18px; font-family:"Bricolage Grotesque",sans-serif; font-weight:800; font-size:14px; color:#fff; }
   .banner.hands{ background:var(--orange); }
   .banner.feedback{ background:var(--purple); }
@@ -219,10 +222,12 @@ function fieldRow(id,ph){ return '<div class="field-row"><textarea id="'+id+'" p
 function doneBtn(id){ return '<button class="donebtn" style="border:0;padding:11px 18px;border-radius:12px;font-weight:700;cursor:pointer;" onclick="toggleDone(\''+id+'\',this)">Mark done ✓</button><span class="done-tag hide" id="'+id+'_tag">Done!</span>'; }
 function checklistHTML(){ var h='<div class="chk-wrap">'; SPEAK_SKILLS.forEach(function(s){ h+='<div class="chk" data-skill="'+s.k+'" onclick="toggleSkill(\''+s.k+'\',this)"><span class="ic">'+s.ic+'</span><span>'+s.t+'</span><span class="mark">✓</span></div>'; }); return h+'</div>'; }
 function buildAll(){
+  if(window.speechSynthesis) speechSynthesis.cancel();
   var m=mode(),un=unlocked(m),arr=parts(),html='';
   arr.forEach(function(p,i){ var open=true; html+='<div class="card">';
     if(open&&p.banner) html+='<div class="banner '+p.banner+'">'+p.bannerText+'</div>';
     html+='<div class="body"><div class="partnum">Part '+(i+1)+' of '+arr.length+'</div><h2>'+p.title+'</h2>';
+    html+='<button class="readbtn" onclick="readCard(this)">🔊 Read this step</button>';
     if(open) html+=p.body();
     else html+='<div class="lockbody"><div class="lk">🔒</div><p>Ask your guide to unlock this part.</p><div class="lockrow"><input type="password" id="lk_'+i+'" placeholder="Secret code" /><button onclick="tryUnlock('+i+')">Unlock</button></div></div>';
     html+='</div></div>'; });
@@ -280,6 +285,28 @@ function importAll(input){ var f=input.files[0]; if(!f) return; var rd=new FileR
 function guideMenu(){ if(confirm('Delete '+cur()+' permanently? Other students stay saved.')){ var r=roster(); delete r[cur()]; saveRoster(r); var keys=Object.keys(r); if(keys.length===0){ r['Student 1']={}; saveRoster(r); setCur('Student 1'); } else setCur(keys[0]); renderStudents(); buildAll(); showToast('Deleted '+'(student removed)'); } }
 
 function setMode(m){ localStorage.setItem('ks_mode','toy'); buildAll(); }
+
+/* =================== READ ALOUD =================== */
+function resetReadBtns(){ document.querySelectorAll('.readbtn.on').forEach(function(b){ b.classList.remove('on'); b.textContent='🔊 Read this step'; }); }
+function pickVoice(){ var vs=speechSynthesis.getVoices()||[];
+  return vs.find(function(v){ return /en[-_]US/i.test(v.lang) && /(Samantha|Google US English|Jenny|Aria|Ava|Allison|Female)/i.test(v.name); })
+      || vs.find(function(v){ return /en[-_]US/i.test(v.lang); })
+      || vs.find(function(v){ return /^en/i.test(v.lang); }) || null; }
+function readCard(btn){
+  if(!('speechSynthesis' in window)){ showToast('Read aloud needs Chrome'); return; }
+  if(speechSynthesis.speaking||speechSynthesis.pending){ speechSynthesis.cancel(); resetReadBtns(); return; }
+  resetReadBtns();
+  var card=btn.closest('.card'); if(!card) return;
+  var bits=[]; card.querySelectorAll('.banner, h2, .sub, .stepnote, .scenario .bubble, .chk').forEach(function(e){ var t=(e.innerText||'').replace(/[✓🔊⏹]/g,'').trim(); if(t) bits.push(t); });
+  var txt=bits.join('. '); if(!txt) return;
+  var u=new SpeechSynthesisUtterance(txt); u.rate=0.92; u.pitch=1.05; u.lang='en-US';
+  var v=pickVoice(); if(v) u.voice=v;
+  btn.classList.add('on'); btn.textContent='⏹ Stop reading';
+  u.onend=function(){ btn.classList.remove('on'); btn.textContent='🔊 Read this step'; };
+  u.onerror=function(){ btn.classList.remove('on'); btn.textContent='🔊 Read this step'; };
+  speechSynthesis.speak(u);
+}
+if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=function(){ speechSynthesis.getVoices(); }; }
 
 /* =================== INIT =================== */
 ensureStudent(); renderStudents(); setMode(mode());
