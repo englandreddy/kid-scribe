@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kid Scribe — AI Toy Inventors</title>
+<style>
+  :root{ color-scheme: light; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:#f6f7fb; color:#1c2433; line-height:1.4; }
+  header{ background:#2f4b7c; color:#fff; padding:14px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1{ font-size:22px; margin:0; }
+  .modeswitch{ display:flex; gap:8px; }
+  .modeswitch button{ border:0; padding:9px 15px; border-radius:999px; font-size:15px; font-weight:600; background:rgba(255,255,255,.18); color:#fff; cursor:pointer; }
+  .modeswitch button.active{ background:#fff; color:#2f4b7c; }
+  .gear{ margin-left:auto; background:rgba(255,255,255,.18); border:0; color:#fff; font-size:18px; padding:9px 12px; border-radius:10px; cursor:pointer; }
+  .wrap{ max-width:840px; margin:0 auto; padding:20px; }
+  .hint{ font-size:14px; color:#56607a; background:#fff; border:1px solid #e2e6f0; border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+  .hint b{ color:#2f4b7c; }
+  .studentbar{ display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; background:#eef2fb; border:1px solid #d5def2; border-radius:12px; padding:12px 14px; }
+  .studentbar label{ font-weight:700; color:#2f4b7c; font-size:15px; }
+  .studentbar select{ flex:1; min-width:200px; font-size:17px; padding:11px 12px; border:2px solid #cdd4e6; border-radius:10px; background:#fff; }
+  .studentbar .saved{ font-size:13px; color:#3a7d44; font-weight:700; }
+  .card{ background:#fff; border:1px solid #e2e6f0; border-radius:16px; padding:0; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 2px rgba(20,30,60,.04); }
+  .card .body{ padding:18px; }
+  .partnum{ font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a93ad; }
+  .card h2{ margin:2px 0 4px; font-size:19px; color:#2f4b7c; }
+  .card .sub{ font-size:14px; color:#56607a; margin:0 0 12px; }
+  .banner{ padding:10px 18px; font-weight:700; font-size:14px; color:#fff; }
+  .banner.hands{ background:#e8821e; }
+  .banner.feedback{ background:#7a4fb0; }
+  .field-row{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; }
+  textarea, .field-row input{ flex:1; font-size:18px; padding:12px 14px; border:2px solid #cdd4e6; border-radius:12px; resize:vertical; font-family:inherit; min-height:54px; }
+  .mic{ flex:0 0 auto; border:0; border-radius:12px; padding:0 18px; min-height:54px; font-size:16px; font-weight:700; background:#3a7d44; color:#fff; cursor:pointer; white-space:nowrap; }
+  .mic.listening{ background:#c0392b; animation:pulse 1s infinite; }
+  @keyframes pulse{ 0%{opacity:1} 50%{opacity:.55} 100%{opacity:1} }
+  .imgprompt{ margin-top:6px; background:#f0f3fb; border:1px dashed #b8c2de; border-radius:10px; padding:10px 12px; font-size:13.5px; color:#3a445f; }
+  .imgprompt .lbl{ font-weight:700; color:#2f4b7c; display:block; margin-bottom:4px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .copysmall{ margin-top:8px; background:#eef; border:1px solid #c7cdf0; color:#2f4b7c; font-size:13px; font-weight:600; padding:7px 12px; border-radius:8px; cursor:pointer; }
+  .scenario{ display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+  .scenario button{ border:0; background:#f5a623; color:#3a2c00; font-weight:700; padding:12px 16px; border-radius:12px; font-size:15px; cursor:pointer; }
+  .scenario .bubble{ flex:1; min-width:240px; background:#fff7e6; border:1px solid #f2d391; border-radius:12px; padding:12px 14px; font-size:17px; color:#6b4e00; }
+  .stepnote{ background:#fff4e8; border:1px solid #f0cfa6; border-radius:10px; padding:12px 14px; font-size:15px; color:#7a4e12; margin-bottom:12px; }
+  .stepnote.fb{ background:#f3edfb; border-color:#d6c4ee; color:#4d2f7a; }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .actions button{ border:0; padding:13px 18px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; }
+  .primary{ background:#2f4b7c; color:#fff; }
+  .ghost{ background:#fff; color:#2f4b7c; border:2px solid #cdd4e6 !important; }
+  .danger{ background:#fff; color:#c0392b; border:2px solid #e8b4ad !important; }
+  .donebtn{ background:#3a7d44; color:#fff; }
+  .done-tag{ display:inline-block; margin-left:10px; color:#3a7d44; font-weight:700; font-size:14px; }
+  .lockbody{ text-align:center; padding:30px 18px; }
+  .lockbody .lk{ font-size:40px; }
+  .lockbody p{ color:#56607a; margin:8px 0 14px; font-size:15px; }
+  .lockrow{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .lockrow input{ font-size:16px; padding:11px 14px; border:2px solid #cdd4e6; border-radius:10px; width:170px; }
+  .lockrow button{ border:0; background:#2f4b7c; color:#fff; font-weight:700; padding:11px 18px; border-radius:10px; cursor:pointer; }
+  .chk-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media(max-width:560px){ .chk-wrap{ grid-template-columns:1fr; } }
+  .chk{ display:flex; align-items:center; gap:10px; border:2px solid #cdd4e6; border-radius:12px; padding:12px 14px; font-size:16px; font-weight:600; cursor:pointer; background:#fff; user-select:none; }
+  .chk .ic{ font-size:22px; }
+  .chk .mark{ margin-left:auto; font-size:20px; color:#cdd4e6; }
+  .chk.on{ border-color:#3a7d44; background:#eef9f0; }
+  .chk.on .mark{ color:#3a7d44; }
+  .chk-count{ font-weight:700; color:#3a7d44; margin-top:10px; }
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1c2433; color:#fff; padding:12px 20px; border-radius:999px; font-size:15px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:50; }
+  .toast.show{ opacity:1; }
+  .nosupport{ background:#fdecea; border:1px solid #f5c6c0; color:#922; padding:12px 14px; border-radius:12px; margin-bottom:14px; font-size:14px; }
+  .hide{ display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎤 Kid Scribe <span style="font-weight:400;font-size:15px;opacity:.85">· AI Toy Inventors</span></h1>
+  <button class="gear" onclick="guideMenu()" title="Guide settings" style="margin-left:auto;">⚙️</button>
+</header>
+
+<div class="wrap">
+  <div id="nosupport" class="nosupport hide">⚠️ Voice typing needs <b>Google Chrome</b> on a laptop or Chromebook, with the microphone allowed. Typing still works without it.</div>
+
+  <div class="studentbar">
+    <label for="studentSelect">Student:</label>
+    <select id="studentSelect" onchange="onStudentChange(this.value)"></select>
+    <span class="saved">✓ Saved automatically</span>
+  </div>
+
+  <div class="hint">Everything is <b>saved on this device automatically</b>, so you can do different parts on different days &mdash; just reopen on the same device and pick the student. Tap <b>🎤 Talk</b> and the student speaks; fix any word by typing.</div>
+
+  <div id="parts"></div>
+
+  <div class="actions">
+    <button class="primary" onclick="copyAll()">Copy this student</button>
+    <button class="ghost" onclick="saveAll()">Download as text</button>
+    <button class="danger" onclick="clearStudent()">Clear this student</button>
+  </div>
+  <div class="actions" style="margin-top:8px;">
+    <button class="ghost" onclick="exportAll()">⬇ Backup all students (to move to another device)</button>
+    <button class="ghost" onclick="document.getElementById('importFile').click()">⬆ Restore from backup</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importAll(this)">
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =================== STORAGE: roster of students =================== */
+var DEFAULT_CODE='alpha2026';
+function code(){ return localStorage.getItem('ks_code')||DEFAULT_CODE; }
+function mode(){ return 'toy'; }
+function unlocked(m){ try{ return JSON.parse(localStorage.getItem('ks_unlock_'+m)||'[0]'); }catch(e){ return [0]; } }
+function setUnlocked(m,a){ localStorage.setItem('ks_unlock_'+m, JSON.stringify(a)); }
+function roster(){ try{ return JSON.parse(localStorage.getItem('ks_roster')||'{}'); }catch(e){ return {}; } }
+function saveRoster(r){ localStorage.setItem('ks_roster', JSON.stringify(r)); }
+function cur(){ return localStorage.getItem('ks_cur')||''; }
+function setCur(n){ localStorage.setItem('ks_cur', n); }
+function getState(){ var r=roster(); return r[cur()]||{}; }
+function putState(o){ var r=roster(); r[cur()]=o; saveRoster(r); }
+function ensureStudent(){ var r=roster(); var keys=Object.keys(r); if(keys.length===0){ r['Student 1']={}; saveRoster(r); setCur('Student 1'); } else if(!r[cur()]){ setCur(keys[0]); } }
+
+function renderStudents(){
+  var sel=document.getElementById('studentSelect'); var r=roster(); var keys=Object.keys(r);
+  var html=''; keys.forEach(function(k){ html+='<option value="'+encodeURIComponent(k)+'">'+k+'</option>'; });
+  html+='<option value="__add__">➕ Add new student…</option>';
+  sel.innerHTML=html; sel.value=encodeURIComponent(cur());
+}
+function onStudentChange(v){
+  if(v==='__add__'){ addStudent(); return; }
+  saveState(); setCur(decodeURIComponent(v)); buildAll(); showToast('Switched to '+cur());
+}
+function addStudent(){
+  var n=prompt('New student name:');
+  if(!n||!n.trim()){ renderStudents(); return; }
+  n=n.trim(); var r=roster(); if(!r[n]) r[n]={}; saveRoster(r); setCur(n); renderStudents(); buildAll(); showToast('Added '+n);
+}
+
+/* =================== SPEECH =================== */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var recog=null,activeBtn=null,activeTarget=null;
+if(!SR){ document.getElementById('nosupport').classList.remove('hide'); }
+function startDictation(id,btn){
+  if(!SR) return; if(recog){ recog.stop(); return; }
+  var tgt=document.getElementById(id); if(!tgt) return;
+  recog=new SR(); recog.lang='en-US'; recog.interimResults=false; recog.continuous=false;
+  activeBtn=btn; activeTarget=tgt; btn.classList.add('listening'); btn.textContent='● Stop';
+  recog.onresult=function(e){ var t=''; for(var i=0;i<e.results.length;i++){ t+=e.results[i][0].transcript; } t=t.trim();
+    if(t){ var c=activeTarget.value.trim(); activeTarget.value=c?(c+' '+t):(t.charAt(0).toUpperCase()+t.slice(1)); refresh(); } };
+  recog.onerror=function(e){ showToast('Mic: '+e.error); };
+  recog.onend=function(){ if(activeBtn){activeBtn.classList.remove('listening');activeBtn.textContent='🎤 Talk';} recog=null;activeBtn=null; };
+  recog.start();
+}
+document.addEventListener('click',function(e){ var b=e.target.closest('.mic'); if(b) startDictation(b.getAttribute('data-target'),b); });
+document.addEventListener('input',function(e){ if(e.target.matches('#parts input,#parts textarea')) refresh(); });
+
+/* =================== PARTS =================== */
+var TOY_PARTS=[
+ {title:'Warm-up: Practice Round',banner:'hands',bannerText:'🙌 Hands-on — do this together, away from the screen',
+  body:function(){ return '<div class="scenario"><button onclick="rollScenario(\'toyScn\')">🎲 New problem</button><div class="bubble" id="toyScn">Tap for a problem to solve together.</div></div>'
+   +'<div class="stepnote">Read the problem out loud. As a group, brainstorm what could help. Everyone says <b>one</b> idea. Do 2–3 rounds — we are practicing finding solutions to problems.</div>'+doneBtn('toy_practice'); }},
+ {title:'Pick your problem',banner:'',bannerText:'',
+  body:function(){ return '<div class="scenario"><button onclick="rollScenario(\'toyPick\')">🎲 Idea spark</button><div class="bubble" id="toyPick">Or use your own problem.</div></div>'
+   +'<label class="sub">Who is stuck, and what is the problem?</label>'+fieldRow('toy_problem','My toy will help with...'); }},
+ {title:'Build it in playdoh',banner:'hands',bannerText:'🙌 Hands-on — build with your hands first',
+  body:function(){ return '<div class="stepnote">Make your toy idea out of playdoh. Try it. Change it. This is your first version — it does not have to be perfect.</div>'+doneBtn('toy_playdoh'); }},
+ {title:'Get feedback',banner:'feedback',bannerText:'💬 Receiving Feedback — this is the skill we are practicing',
+  body:function(){ return '<div class="stepnote fb">Show your playdoh toy to a partner or your guide. Ask: <b>"What is one thing I could make better?"</b> Listen. Say thank you.</div>'
+   +'<label class="sub">Feedback I got</label>'+fieldRow('toy_fb','Someone told me...')
+   +'<label class="sub">What I will change</label>'+fieldRow('toy_change','I am going to...'); }},
+ {title:'Make your brief',banner:'',bannerText:'',
+  body:function(){ return '<label class="sub">Toy name</label>'+fieldRow('toy_name','What is it called?')
+   +'<label class="sub">Who is it for?</label>'+fieldRow('toy_who','A person or kind of person')
+   +'<label class="sub">What does it do?</label>'+fieldRow('toy_what','What does it help them do?')
+   +'<label class="sub">Three features (simple + printable: fits a 5 cm cube, one solid piece)</label>'
+   +fieldRow('toy_f1','Feature 1')+fieldRow('toy_f2','Feature 2')+fieldRow('toy_f3','Feature 3')
+   +'<label class="sub">Describe it <b>exactly</b> — shape, size, colors, and the one most important part. The more exact you are, the better the computer builds it (and the easier it is to say what you changed).</label>'+fieldRow('toy_details','It is shaped like... it is about ... big ... colored ... the most important part is ...'); }},
+ {title:'Make your toy picture',banner:'',bannerText:'',
+  body:function(){ return '<div class="sub">Copy this into the image tool to make the coloring sheet, then send the coloring sheet to Meshy. (You can also photograph the playdoh toy and ask for a "coloring-sheet version.")</div>'
+   +'<div class="imgprompt"><span class="lbl">Prompt</span><span id="toyPrompt"></span></div><button class="copysmall" onclick="copyText(text(\'toyPrompt\'))">Copy prompt</button>'; }},
+ {title:'Practice my showcase (before → after)',banner:'',bannerText:'',
+  body:function(){ return '<div class="stepnote fb">At the showcase you show how feedback made your toy better. Practice saying it out loud.</div>'
+   +'<label class="sub">My first idea was...</label>'+fieldRow('toy_t2p_before','My first playdoh idea was...')
+   +'<label class="sub">After feedback I changed...</label>'+fieldRow('toy_t2p_after','I changed...')
+   +'<label class="sub">I changed it because...</label>'+fieldRow('toy_t2p_why','Because...'); }}
+];
+var STORY_PANELS=[{key:'p1',title:'Box 1 — Beginning',hint:'Meet your character.'},{key:'p2',title:'Box 2 — Middle',hint:'The problem shows up.'},{key:'p3',title:'Box 3 — Climax',hint:'The big moment!'},{key:'p4',title:'Box 4 — Resolution',hint:'How it ends.'}];
+var STORY_PARTS=[
+ {title:'My character',banner:'',bannerText:'',
+  body:function(){ return '<div class="sub">Describe your character once — it is used in every picture so they match.</div>'+fieldRow('story_char','A small green dragon with a blue scarf...'); }},
+ {title:'My storyboard',banner:'',bannerText:'',
+  body:function(){ var h=''; STORY_PANELS.forEach(function(p){ h+='<label class="sub"><b>'+p.title+'</b> — '+p.hint+'</label>'+fieldRow(p.key,'Say what happens')
+   +'<div class="imgprompt"><span class="lbl">Picture prompt for this box</span><span id="'+p.key+'_prompt"></span></div><button class="copysmall" onclick="copyText(text(\''+p.key+'_prompt\'))">Copy this picture prompt</button>'; }); return h; }},
+ {title:'Tell it to a partner',banner:'hands',bannerText:'🙌 Hands-on — away from the screen',
+  body:function(){ return '<div class="stepnote">Tell your whole story to a partner, pointing at each box. Partner says one thing they liked and one thing to try. Swap.</div>'+doneBtn('story_partner'); }},
+ {title:'Public speaking skills I am working toward',banner:'',bannerText:'',
+  body:function(){ return '<div class="sub">Practice telling your story. Tap a skill when you can do it. Try to light them all up green!</div>'+checklistHTML()+'<div class="chk-count" id="chkCount"></div>'; }},
+ {title:'Showcase run-through',banner:'',bannerText:'',
+  body:function(){ return '<div class="stepnote">Final practice. Tell your whole story start to finish using your skills checklist. Then stop — do not over-practice.</div>'+doneBtn('story_final'); }}
+];
+var SPEAK_SKILLS=[{k:'sk_loud',ic:'🔊',t:'Big, clear voice'},{k:'sk_slow',ic:'🐢',t:'Not too fast'},{k:'sk_point',ic:'👉',t:'Point to each picture'},{k:'sk_feel',ic:'😀',t:'Show feeling'},{k:'sk_look',ic:'👀',t:'Look up at people'},{k:'sk_order',ic:'🎬',t:'In order, start to end'}];
+var SCENARIOS=["A kid is bored waiting at a restaurant.","A little sibling keeps grabbing toys and won't share.","Someone can't fall asleep at night.","A kid gets bored on a long car ride.","A friend is nervous before the first day of school.","Someone keeps losing small things.","A kid feels lonely at recess.","Someone has the wiggles and can't sit still.","A kid is scared of the dark.","Someone needs to calm down when they feel mad."];
+function rollScenario(id){ var el=document.getElementById(id); if(el) el.innerText=SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)]; }
+
+/* =================== RENDER =================== */
+function parts(){ return mode()==='toy'?TOY_PARTS:STORY_PARTS; }
+function fieldRow(id,ph){ return '<div class="field-row"><textarea id="'+id+'" placeholder="'+ph+'"></textarea><button class="mic" data-target="'+id+'">🎤 Talk</button></div>'; }
+function doneBtn(id){ return '<button class="donebtn" style="border:0;padding:11px 18px;border-radius:12px;font-weight:700;cursor:pointer;" onclick="toggleDone(\''+id+'\',this)">Mark done ✓</button><span class="done-tag hide" id="'+id+'_tag">Done!</span>'; }
+function checklistHTML(){ var h='<div class="chk-wrap">'; SPEAK_SKILLS.forEach(function(s){ h+='<div class="chk" data-skill="'+s.k+'" onclick="toggleSkill(\''+s.k+'\',this)"><span class="ic">'+s.ic+'</span><span>'+s.t+'</span><span class="mark">✓</span></div>'; }); return h+'</div>'; }
+function buildAll(){
+  var m=mode(),un=unlocked(m),arr=parts(),html='';
+  arr.forEach(function(p,i){ var open=true; html+='<div class="card">';
+    if(open&&p.banner) html+='<div class="banner '+p.banner+'">'+p.bannerText+'</div>';
+    html+='<div class="body"><div class="partnum">Part '+(i+1)+' of '+arr.length+'</div><h2>'+p.title+'</h2>';
+    if(open) html+=p.body();
+    else html+='<div class="lockbody"><div class="lk">🔒</div><p>Ask your guide to unlock this part.</p><div class="lockrow"><input type="password" id="lk_'+i+'" placeholder="Secret code" /><button onclick="tryUnlock('+i+')">Unlock</button></div></div>';
+    html+='</div></div>'; });
+  document.getElementById('parts').innerHTML=html; loadState(); refresh();
+}
+function tryUnlock(i){ var v=(document.getElementById('lk_'+i)||{}).value||''; if(v.trim()===code()){ var m=mode(),un=unlocked(m); if(un.indexOf(i)<0)un.push(i); setUnlocked(m,un); buildAll(); showToast('Part '+(i+1)+' unlocked'); } else showToast('Wrong code'); }
+
+function val(id){ var e=document.getElementById(id); return e?e.value.trim():''; }
+function text(id){ var e=document.getElementById(id); return e?e.innerText:''; }
+function lc(s){ return s?s.charAt(0).toLowerCase()+s.slice(1):''; }
+function refresh(){ renderToyPrompt(); renderStoryPrompts(); renderChkCount(); saveState(); }
+function renderToyPrompt(){ var el=document.getElementById('toyPrompt'); if(!el) return;
+  var name=val('toy_name'),what=val('toy_what'),d=val('toy_details'),f=[val('toy_f1'),val('toy_f2'),val('toy_f3')].filter(Boolean).join(', ');
+  var p='Simple black-and-white coloring-sheet line drawing of a toy'; if(name)p+=' called "'+name+'"'; p+='. ';
+  if(what)p+='It '+lc(what)+'. '; if(f)p+='It has: '+lc(f)+'. '; if(d)p+='Exact details: '+lc(d)+'. ';
+  p+='Chunky, rounded, child-friendly shape, one solid object, thick clean outlines, no shading, white background. Made to become a small 3D-printed toy (fits in a 5 cm cube).'; el.innerText=p; }
+function renderStoryPrompts(){ var ch=val('story_char'); STORY_PANELS.forEach(function(p){ var el=document.getElementById(p.key+'_prompt'); if(!el) return; var s=val(p.key);
+  var t='Soft crayon-and-colored-pencil children\'s storybook illustration. Show: '+(s||'(say what happens)')+'. '; if(ch)t+='The character is: '+ch+'. ';
+  t+='Same character and setting style across all four pictures. Visible crayon texture, warm rounded shapes, gentle outlines, bright friendly colors. No photorealism, no 3D, no anime. Square 1:1 image.'; el.innerText=t; }); }
+function renderChkCount(){ var el=document.getElementById('chkCount'); if(!el) return; var n=0,st=getState(); SPEAK_SKILLS.forEach(function(s){ if(st[s.k]==='1')n++; }); el.innerText=n+' of '+SPEAK_SKILLS.length+' skills practiced'; }
+
+function toggleDone(id,btn){ var st=getState(); st[id]=st[id]==='1'?'':'1'; putState(st); var tag=document.getElementById(id+'_tag'); if(st[id]==='1'){ btn.style.opacity=.6; if(tag)tag.classList.remove('hide'); } else { btn.style.opacity=1; if(tag)tag.classList.add('hide'); } }
+function toggleSkill(k,el){ var st=getState(); st[k]=st[k]==='1'?'':'1'; putState(st); el.classList.toggle('on',st[k]==='1'); renderChkCount(); }
+
+function saveState(){ var o=getState(); document.querySelectorAll('#parts input, #parts textarea').forEach(function(e){ if(e.type!=='password'&&e.id) o[e.id]=e.value; }); putState(o); }
+function loadState(){ var o=getState();
+  Object.keys(o).forEach(function(id){ var e=document.getElementById(id); if(e&&(e.tagName==='INPUT'||e.tagName==='TEXTAREA')&&e.type!=='password') e.value=o[id]; });
+  document.querySelectorAll('.chk').forEach(function(c){ if(o[c.getAttribute('data-skill')]==='1') c.classList.add('on'); });
+  ['toy_practice','toy_playdoh','story_partner','story_final'].forEach(function(id){ var tag=document.getElementById(id+'_tag'); if(tag&&o[id]==='1') tag.classList.remove('hide'); });
+}
+
+function showToast(m){ var t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},1700); }
+function copyText(t){ if(!t){ showToast('Nothing yet'); return;} navigator.clipboard.writeText(t).then(function(){showToast('Copied!');},function(){showToast('Copy failed');}); }
+function copyAll(){ copyText(buildText()); }
+function saveAll(){ var fn=(cur()||'student')+'_'+mode()+'.txt'; var b=new Blob([buildText()],{type:'text/plain'}); var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fn; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500); showToast('Saved '+fn); }
+function buildText(){ var who=cur()||'Student';
+  if(mode()==='toy'){ return 'TOY INVENTOR — '+who+'\nProblem: '+val('toy_problem')+'\nFeedback I got: '+val('toy_fb')+'\nWhat I changed: '+val('toy_change')+'\nToy name: '+val('toy_name')+'\nWho it is for: '+val('toy_who')+'\nWhat it does: '+val('toy_what')+'\nFeatures: '+[val('toy_f1'),val('toy_f2'),val('toy_f3')].filter(Boolean).join('; ')+'\nExact details: '+val('toy_details')+'\nShowcase (before → after): '+val('toy_t2p_before')+' / '+val('toy_t2p_after')+' / because '+val('toy_t2p_why')+'\n\nColoring-sheet / Meshy prompt:\n'+text('toyPrompt')+'\n'; }
+  var out='STORYBOARD — '+who+'\nCharacter: '+val('story_char')+'\n\n'; STORY_PANELS.forEach(function(p){ out+=p.title+'\n  Story: '+val(p.key)+'\n  Picture prompt: '+text(p.key+'_prompt')+'\n\n'; });
+  var d=[],st=getState(); SPEAK_SKILLS.forEach(function(s){ if(st[s.k]==='1')d.push(s.t); }); out+='Public-speaking skills practiced: '+(d.join(', ')||'none yet')+'\n'; return out; }
+function clearStudent(){ if(!confirm('Clear THIS student\'s work? Other students stay saved.')) return; putState({}); buildAll(); showToast('Cleared '+cur()); }
+
+function exportAll(){ var data={kidScribeBackup:true,exported:new Date().toISOString(),roster:roster(),code:code(),unlock_toy:unlocked('toy'),unlock_story:unlocked('story')};
+  var b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='kid-scribe-backup.json'; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500);
+  showToast('Backup downloaded ('+Object.keys(roster()).length+' students)'); }
+function importAll(input){ var f=input.files[0]; if(!f) return; var rd=new FileReader();
+  rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(!d.roster){ showToast('Not a Kid Scribe backup'); return; }
+    if(!confirm('Add '+Object.keys(d.roster).length+' student(s) from this backup? Existing students with the same name will be overwritten.')) return;
+    saveRoster(Object.assign(roster(), d.roster));
+    if(d.code) localStorage.setItem('ks_code', d.code);
+    if(d.unlock_toy) setUnlocked('toy', d.unlock_toy); if(d.unlock_story) setUnlocked('story', d.unlock_story);
+    ensureStudent(); renderStudents(); buildAll(); showToast('Restored '+Object.keys(d.roster).length+' students');
+  }catch(e){ showToast('Could not read that file'); } };
+  rd.readAsText(f); input.value=''; }
+
+function guideMenu(){ if(confirm('Delete '+cur()+' permanently? Other students stay saved.')){ var r=roster(); delete r[cur()]; saveRoster(r); var keys=Object.keys(r); if(keys.length===0){ r['Student 1']={}; saveRoster(r); setCur('Student 1'); } else setCur(keys[0]); renderStudents(); buildAll(); showToast('Deleted '+'(student removed)'); } }
+
+function setMode(m){ localStorage.setItem('ks_mode','toy'); buildAll(); }
+
+/* =================== INIT =================== */
+ensureStudent(); renderStudents(); setMode(mode());
+</script>
+</body>
+</html>
